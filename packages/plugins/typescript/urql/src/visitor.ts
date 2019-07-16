@@ -69,8 +69,13 @@ export function use${operationName}() {
   return Urql.use${operationType}<${operationResultType}, ${operationVariablesTypes}>(${documentVariableName});
 };`;
     }
+    const generics = [operationVariablesTypes];
+
+    if (operationType !== 'Subscription') {
+      generics.unshift(operationResultType);
+    }
     return `
-export function use${operationName}(options: Omit<Urql.Use${operationType}Args<${operationVariablesTypes}>, 'query'> = {}) {
+export function use${operationName}(options: Omit<Urql.Use${operationType}Args<${generics.join(', ')}>, 'query'> = {}) {
   return Urql.use${operationType}<${operationResultType}>({ query: ${documentVariableName}, ...options });
 };`;
   }

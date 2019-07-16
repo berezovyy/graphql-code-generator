@@ -513,9 +513,8 @@ query MyFeed {
           outputFile: 'graphql.tsx',
         }
       )) as Types.ComplexPluginOutput;
-
       expect(content.content).toBeSimilarStringTo(`
-export function useFeedQuery(options: Omit<Urql.UseQueryArgs<FeedQueryVariables>, 'query'> = {}) {
+export function useFeedQuery(options: Omit<Urql.UseQueryArgs<FeedQuery, FeedQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<FeedQuery>({ query: FeedDocument, ...options });
 };`);
 
@@ -542,6 +541,36 @@ export function useSubmitRepositoryMutation() {
     });
 
     it('Should generate subscription hooks', async () => {
+      const documents = parse(/* GraphQL */ `
+        subscription ListenToComments($name: String) {
+          commentAdded(repoFullName: $name) {
+            id
+          }
+        }
+      `);
+
+      const docs = [{ filePath: '', content: documents }];
+
+      const content = (await plugin(
+        schema,
+        docs,
+        {
+          withHooks: true,
+          withComponent: false,
+        },
+        {
+          outputFile: 'graphql.tsx',
+        }
+      )) as Types.ComplexPluginOutput;
+
+      expect(content.content).toBeSimilarStringTo(`
+export function useListenToCommentsSubscription(options: Omit<Urql.UseSubscriptionArgs<ListenToCommentsSubscriptionVariables>, 'query'> = {}) {
+  return Urql.useSubscription<ListenToCommentsSubscription>({ query: ListenToCommentsDocument, ...options });
+};`);
+      await validateTypeScript(content, schema, docs, {});
+    });
+
+    it('Should add one generic to subscription hooks', async () => {
       const documents = parse(/* GraphQL */ `
         subscription ListenToComments($name: String) {
           commentAdded(repoFullName: $name) {
